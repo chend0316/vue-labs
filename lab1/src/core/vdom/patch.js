@@ -110,44 +110,27 @@ export function createPatchFunction (backend) {
     )
   }
 
-  let creatingElmInVPre = 0
-
+  /**
+   * 根据vnode创建真实DOM节点
+   * 
+   * DOM API有点怪异：
+   * 只有insertBefore和appendChild接口，没有insertAfter接口
+   * 而且这两个接口都需要通过parent调用
+   */
   function createElm (
     vnode,
-    insertedVnodeQueue,
+    insertedVnodeQueue,  // 这个参数没用
     parentElm,
-    refElm,
+    refElm,  // 用于insertBefore
     nested,
     ownerArray,
     index
   ) {
-    if (isDef(vnode.elm) && isDef(ownerArray)) {
-      // This vnode was used in a previous render!
-      // now it's used as a new node, overwriting its elm would cause
-      // potential patch errors down the road when it's used as an insertion
-      // reference node. Instead, we clone the node on-demand before creating
-      // associated DOM element for it.
-      vnode = ownerArray[index] = cloneVNode(vnode)
-    }
-
-    vnode.isRootInsert = !nested // for transition enter check
-    if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
-      return
-    }
-
-    const data = vnode.data
     const children = vnode.children
     const tag = vnode.tag
     if (isDef(tag)) {
-      vnode.elm = vnode.ns
-        ? nodeOps.createElementNS(vnode.ns, tag)
-        : nodeOps.createElement(tag, vnode)
-      setScope(vnode)
-
+      vnode.elm = nodeOps.createElement(tag, vnode)
       createChildren(vnode, children, insertedVnodeQueue)
-      if (isDef(data)) {
-        invokeCreateHooks(vnode, insertedVnodeQueue)
-      }
       insert(parentElm, vnode.elm, refElm)
     } else if (isTrue(vnode.isComment)) {
       vnode.elm = nodeOps.createComment(vnode.text)
@@ -156,68 +139,6 @@ export function createPatchFunction (backend) {
       vnode.elm = nodeOps.createTextNode(vnode.text)
       insert(parentElm, vnode.elm, refElm)
     }
-  }
-
-  function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
-    let i = vnode.data
-    if (isDef(i)) {
-      const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
-      if (isDef(i = i.hook) && isDef(i = i.init)) {
-        i(vnode, false /* hydrating */)
-      }
-      // after calling the init hook, if the vnode is a child component
-      // it should've created a child instance and mounted it. the child
-      // component also has set the placeholder vnode's elm.
-      // in that case we can just return the element and be done.
-      if (isDef(vnode.componentInstance)) {
-        initComponent(vnode, insertedVnodeQueue)
-        insert(parentElm, vnode.elm, refElm)
-        if (isTrue(isReactivated)) {
-          reactivateComponent(vnode, insertedVnodeQueue, parentElm, refElm)
-        }
-        return true
-      }
-    }
-  }
-
-  function initComponent (vnode, insertedVnodeQueue) {
-    if (isDef(vnode.data.pendingInsert)) {
-      insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert)
-      vnode.data.pendingInsert = null
-    }
-    vnode.elm = vnode.componentInstance.$el
-    if (isPatchable(vnode)) {
-      invokeCreateHooks(vnode, insertedVnodeQueue)
-      setScope(vnode)
-    } else {
-      // empty component root.
-      // skip all element-related modules except for ref (#3455)
-      registerRef(vnode)
-      // make sure to invoke the insert hook
-      insertedVnodeQueue.push(vnode)
-    }
-  }
-
-  function reactivateComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
-    let i
-    // hack for #4339: a reactivated component with inner transition
-    // does not trigger because the inner node's created hooks are not called
-    // again. It's not ideal to involve module-specific logic in here but
-    // there doesn't seem to be a better way to do it.
-    let innerNode = vnode
-    while (innerNode.componentInstance) {
-      innerNode = innerNode.componentInstance._vnode
-      if (isDef(i = innerNode.data) && isDef(i = i.transition)) {
-        for (i = 0; i < cbs.activate.length; ++i) {
-          cbs.activate[i](emptyNode, innerNode)
-        }
-        insertedVnodeQueue.push(innerNode)
-        break
-      }
-    }
-    // unlike a newly created component,
-    // a reactivated keep-alive component doesn't insert itself
-    insert(parentElm, vnode.elm, refElm)
   }
 
   function insert (parent, elm, ref) {
@@ -234,9 +155,6 @@ export function createPatchFunction (backend) {
 
   function createChildren (vnode, children, insertedVnodeQueue) {
     if (Array.isArray(children)) {
-      if (process.env.NODE_ENV !== 'production') {
-        checkDuplicateKeys(children)
-      }
       for (let i = 0; i < children.length; ++i) {
         createElm(children[i], insertedVnodeQueue, vnode.elm, null, true, children, i)
       }
@@ -260,32 +178,6 @@ export function createPatchFunction (backend) {
     if (isDef(i)) {
       if (isDef(i.create)) i.create(emptyNode, vnode)
       if (isDef(i.insert)) insertedVnodeQueue.push(vnode)
-    }
-  }
-
-  // set scope id attribute for scoped CSS.
-  // this is implemented as a special case to avoid the overhead
-  // of going through the normal attribute patching process.
-  function setScope (vnode) {
-    let i
-    if (isDef(i = vnode.fnScopeId)) {
-      nodeOps.setStyleScope(vnode.elm, i)
-    } else {
-      let ancestor = vnode
-      while (ancestor) {
-        if (isDef(i = ancestor.context) && isDef(i = i.$options._scopeId)) {
-          nodeOps.setStyleScope(vnode.elm, i)
-        }
-        ancestor = ancestor.parent
-      }
-    }
-    // for slot content they should also get the scopeId from the host instance.
-    if (isDef(i = activeInstance) &&
-      i !== vnode.context &&
-      i !== vnode.fnContext &&
-      isDef(i = i.$options._scopeId)
-    ) {
-      nodeOps.setStyleScope(vnode.elm, i)
     }
   }
 
@@ -521,18 +413,6 @@ export function createPatchFunction (backend) {
     if (data && data.hook && data.hook.postpatch) data.hook.postpatch(oldVnode, vnode)
   }
 
-  function invokeInsertHook (vnode, queue, initial) {
-    // delay insert hooks for component root nodes, invoke them after the
-    // element is really inserted
-    if (isTrue(initial) && isDef(vnode.parent)) {
-      vnode.parent.data.pendingInsert = queue
-    } else {
-      for (let i = 0; i < queue.length; ++i) {
-        queue[i].data.hook.insert(queue[i])
-      }
-    }
-  }
-
   let hydrationBailed = false
   // list of modules that can skip create hook during hydration because they
   // are already rendered on the client or has no need for initialization
@@ -645,23 +525,24 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // patch是将vdom应用到真实DOM的过程
+  // 这个过程会对新旧vdom节点树进行比较，只将有变动的内容更新到DOM上
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
+      // 删除节点
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
       return
     }
 
-    let isInitialPatch = false
     const insertedVnodeQueue = []
 
     if (isUndef(oldVnode)) {
-      // empty mount (likely as component), create new root element
-      isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
     } else {
-      const isRealElement = isDef(oldVnode.nodeType)  // DOM接口有nodeType，VNode接口没有nodeType，通过nodeType可以判断是真实DOM元素还是虚拟DOM元素
+      // DOM接口有nodeType，VNode接口没有nodeType，通过nodeType可以判断是真实DOM元素还是虚拟DOM元素
+      // 旧节点有可能是vnode元素也可能是vnode元素
+      const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
-        // patch existing root node
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
         if (isRealElement) {
@@ -673,48 +554,12 @@ export function createPatchFunction (backend) {
         const parentElm = nodeOps.parentNode(oldElm)
 
         // create new node
-        createElm(
-          vnode,
-          insertedVnodeQueue,
-          parentElm,
-          nodeOps.nextSibling(oldElm)
-        )
-
-        // update parent placeholder node element, recursively
-        if (isDef(vnode.parent)) {
-          let ancestor = vnode.parent
-          const patchable = isPatchable(vnode)
-          while (ancestor) {
-            for (let i = 0; i < cbs.destroy.length; ++i) {
-              cbs.destroy[i](ancestor)
-            }
-            ancestor.elm = vnode.elm
-            if (patchable) {
-              for (let i = 0; i < cbs.create.length; ++i) {
-                cbs.create[i](emptyNode, ancestor)
-              }
-              // #6513
-              // invoke insert hooks that may have been merged by create hooks.
-              // e.g. for directives that uses the "inserted" hook.
-              const insert = ancestor.data.hook.insert
-              if (insert.merged) {
-                // start at index 1 to avoid re-invoking component mounted hook
-                for (let i = 1; i < insert.fns.length; i++) {
-                  insert.fns[i]()
-                }
-              }
-            } else {
-              registerRef(ancestor)
-            }
-            ancestor = ancestor.parent
-          }
-        }
+        createElm(vnode, insertedVnodeQueue, parentElm, nodeOps.nextSibling(oldElm))
 
         removeVnodes([oldVnode], 0, 0)
       }
     }
 
-    invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch)
     return vnode.elm
   }
 }
