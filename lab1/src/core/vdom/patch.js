@@ -11,9 +11,6 @@
  */
 
 import VNode, { cloneVNode } from './vnode'
-import { registerRef } from './modules/ref'
-import { traverse } from '../observer/traverse'
-import { activeInstance } from '../instance/lifecycle'
 import { isTextInputType } from 'web/util/element'
 
 import {
@@ -102,14 +99,6 @@ export function createPatchFunction (backend) {
     }
   }
 
-  function isUnknownElement (vnode, inVPre) {
-    return (
-      !inVPre &&
-      !vnode.ns &&
-      false
-    )
-  }
-
   /**
    * 根据vnode创建真实DOM节点
    * 
@@ -168,17 +157,6 @@ export function createPatchFunction (backend) {
       vnode = vnode.componentInstance._vnode
     }
     return isDef(vnode.tag)
-  }
-
-  function invokeCreateHooks (vnode, insertedVnodeQueue) {
-    for (let i = 0; i < cbs.create.length; ++i) {
-      cbs.create[i](emptyNode, vnode)
-    }
-    i = vnode.data.hook // Reuse variable
-    if (isDef(i)) {
-      if (isDef(i.create)) i.create(emptyNode, vnode)
-      if (isDef(i.insert)) insertedVnodeQueue.push(vnode)
-    }
   }
 
   function addVnodes (parentElm, refElm, vnodes, startIdx, endIdx, insertedVnodeQueue) {
@@ -360,15 +338,6 @@ export function createPatchFunction (backend) {
 
     const elm = vnode.elm = oldVnode.elm
 
-    if (isTrue(oldVnode.isAsyncPlaceholder)) {
-      if (isDef(vnode.asyncFactory.resolved)) {
-        hydrate(oldVnode.elm, vnode, insertedVnodeQueue)
-      } else {
-        vnode.isAsyncPlaceholder = true
-      }
-      return
-    }
-
     // reuse element for static trees.
     // note we only do this if the vnode is cloned -
     // if the new node is not cloned it means the render functions have been
@@ -411,118 +380,6 @@ export function createPatchFunction (backend) {
     }
 
     if (data && data.hook && data.hook.postpatch) data.hook.postpatch(oldVnode, vnode)
-  }
-
-  let hydrationBailed = false
-  // list of modules that can skip create hook during hydration because they
-  // are already rendered on the client or has no need for initialization
-  // Note: style is excluded because it relies on initial clone for future
-  // deep updates (#7063).
-  const isRenderedModule = makeMap('attrs,class,staticClass,staticStyle,key')
-
-  // Note: this is a browser-only function so we can assume elms are DOM nodes.
-  function hydrate (elm, vnode, insertedVnodeQueue, inVPre) {
-    let i
-    const { tag, data, children } = vnode
-    inVPre = inVPre || (data && data.pre)
-    vnode.elm = elm
-
-    if (isTrue(vnode.isComment) && isDef(vnode.asyncFactory)) {
-      vnode.isAsyncPlaceholder = true
-      return true
-    }
-    // assert node match
-    if (process.env.NODE_ENV !== 'production') {
-      if (!assertNodeMatch(elm, vnode, inVPre)) {
-        return false
-      }
-    }
-    if (isDef(data)) {
-      if (isDef(i = data.hook) && isDef(i = i.init)) i(vnode, true /* hydrating */)
-      if (isDef(i = vnode.componentInstance)) {
-        // child component. it should have hydrated its own tree.
-        initComponent(vnode, insertedVnodeQueue)
-        return true
-      }
-    }
-    if (isDef(tag)) {
-      if (isDef(children)) {
-        // empty element, allow client to pick up and populate children
-        if (!elm.hasChildNodes()) {
-          createChildren(vnode, children, insertedVnodeQueue)
-        } else {
-          // v-html and domProps: innerHTML
-          if (isDef(i = data) && isDef(i = i.domProps) && isDef(i = i.innerHTML)) {
-            if (i !== elm.innerHTML) {
-              /* istanbul ignore if */
-              if (process.env.NODE_ENV !== 'production' &&
-                typeof console !== 'undefined' &&
-                !hydrationBailed
-              ) {
-                hydrationBailed = true
-                console.warn('Parent: ', elm)
-                console.warn('server innerHTML: ', i)
-                console.warn('client innerHTML: ', elm.innerHTML)
-              }
-              return false
-            }
-          } else {
-            // iterate and compare children lists
-            let childrenMatch = true
-            let childNode = elm.firstChild
-            for (let i = 0; i < children.length; i++) {
-              if (!childNode || !hydrate(childNode, children[i], insertedVnodeQueue, inVPre)) {
-                childrenMatch = false
-                break
-              }
-              childNode = childNode.nextSibling
-            }
-            // if childNode is not null, it means the actual childNodes list is
-            // longer than the virtual children list.
-            if (!childrenMatch || childNode) {
-              /* istanbul ignore if */
-              if (process.env.NODE_ENV !== 'production' &&
-                typeof console !== 'undefined' &&
-                !hydrationBailed
-              ) {
-                hydrationBailed = true
-                console.warn('Parent: ', elm)
-                console.warn('Mismatching childNodes vs. VNodes: ', elm.childNodes, children)
-              }
-              return false
-            }
-          }
-        }
-      }
-      if (isDef(data)) {
-        let fullInvoke = false
-        for (const key in data) {
-          if (!isRenderedModule(key)) {
-            fullInvoke = true
-            invokeCreateHooks(vnode, insertedVnodeQueue)
-            break
-          }
-        }
-        if (!fullInvoke && data['class']) {
-          // ensure collecting deps for deep class bindings for future updates
-          traverse(data['class'])
-        }
-      }
-    } else if (elm.data !== vnode.text) {
-      elm.data = vnode.text
-    }
-    return true
-  }
-
-  function assertNodeMatch (node, vnode, inVPre) {
-    if (isDef(vnode.tag)) {
-      return vnode.tag.indexOf('vue-component') === 0 || (
-        !isUnknownElement(vnode, inVPre) &&
-        vnode.tag.toLowerCase() === (node.tagName && node.tagName.toLowerCase())
-      )
-    } else {
-      return node.nodeType === (vnode.isComment ? 8 : 3)
-    }
   }
 
   // patch是将vdom应用到真实DOM的过程
