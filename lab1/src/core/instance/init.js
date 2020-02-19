@@ -14,8 +14,8 @@ export function initMixin (Vue: Class<Component>) {
 
     // a flag to avoid this being observed
     vm._isVue = true
+    
     // merge options
-  
     vm.$options = mergeOptions(
       vm.constructor.options,
       options || {},

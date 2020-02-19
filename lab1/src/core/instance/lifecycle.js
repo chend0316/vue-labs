@@ -1,16 +1,5 @@
 /* @flow */
 
-export let activeInstance: any = null
-export let isUpdatingChildComponent: boolean = false
-
-export function setActiveInstance(vm: Component) {
-  const prevActiveInstance = activeInstance
-  activeInstance = vm
-  return () => {
-    activeInstance = prevActiveInstance
-  }
-}
-
 export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
