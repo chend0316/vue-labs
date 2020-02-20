@@ -1,14 +1,18 @@
-let d = {
-  msg: 'Hello World'
-}
 
 let app = new Vue({
   render (h) {
-    return h('div', this.msg)
+    return h('div', [
+      h('p', this.msg),
+      h('ul', [
+        h('li', 'aaa'),
+        h('li', 'bbb'),
+        h('li', 'ccc'),
+      ]),
+    ])
   },
   data () {
-    return d
+    return {
+      msg: 'Hello World'
+    }
   }
 }).$mount('#app')
-
-d.msg = 'Hello Vue'
