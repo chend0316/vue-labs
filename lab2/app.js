@@ -1,3 +1,6 @@
+let d = {
+  msg: 'Hello World'
+}
 
 let app = new Vue({
   render (h) {
@@ -11,8 +14,8 @@ let app = new Vue({
     ])
   },
   data () {
-    return {
-      msg: 'Hello World'
-    }
+    return d
   }
 }).$mount('#app')
+
+d.msg = 'Hello Vue'
