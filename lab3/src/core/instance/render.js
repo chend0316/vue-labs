@@ -1,6 +1,6 @@
 /* @flow */
 import { createElement } from '../vdom/create-element'
-import VNode from '../vdom/vnode'
+import VNode, { createEmptyVNode } from '../vdom/vnode'
 
 export function initRender (vm: Component) {
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
