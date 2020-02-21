@@ -35,3 +35,10 @@ Lab2的入口有2个：
 当业务读取data时，就注册了一个订阅者，流程自己分析吧。
 
 Lab2移除了Scheduler，即core/observer/scheduler.js文件，这部分代码以后专门分析。
+
+## Lab3（patchVnode）
+
+patch的目的是当dom树改变的时候，避免替换整个节点树，只替换有变动的节点，以提升效率。
+
+Lab3会在core/vdom/patch.js下增加`patchVnode()`，这个Lab涉及到的算法很难理解。后续实验中也不会保留`patchVnode()`代码，如果看不懂也可以跳过，不会影响后续实验。
+
