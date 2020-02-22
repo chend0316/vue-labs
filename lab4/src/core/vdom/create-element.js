@@ -2,6 +2,7 @@
 
 import config from '../config'
 import VNode, { createEmptyVNode } from './vnode'
+import { createComponent } from './create-component'
 
 import {
   isPrimitive
@@ -52,6 +53,9 @@ export function _createElement (
         undefined, undefined, context
       )
     }
+  } else {
+    // Lab4: 组件化
+    vnode = createComponent(tag, data, context, children)
   }
   return vnode
 }

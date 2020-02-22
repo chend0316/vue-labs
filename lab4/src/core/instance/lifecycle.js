@@ -6,9 +6,9 @@ export function lifecycleMixin (Vue: Class<Component>) {
     const vm: Component = this
     if (!vm._vnode) {
       vm._vnode = vnode
-      vm.__patch__(vm.$el, vnode)
+      vm.$el = vm.__patch__(vm.$el, vnode)
     } else {
-      vm.__patch__(vm._vnode, vnode)
+      vm.$el = vm.__patch__(vm._vnode, vnode)
     }
   }
 }

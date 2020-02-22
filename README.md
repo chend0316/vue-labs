@@ -1,6 +1,10 @@
 # vue-labs
 用于学习Vue源码的各种实验
 
+data->vnode的过程是由core/vdom/create-element.js中的`createElement()`实现的。
+
+vnode->node的过程是由core/vdom/patch.js中的`patch()`实现的。
+
 ## Lab1
 
 * 通过VDOM接口在页面上显示Hello
@@ -42,3 +46,23 @@ patch的目的是当dom树改变的时候，避免替换整个节点树，只替
 
 Lab3会在core/vdom/patch.js下增加`patchVnode()`，这个Lab涉及到的算法很难理解。后续实验中也不会保留`patchVnode()`代码，如果看不懂也可以跳过，不会影响后续实验。
 
+## Lab4 组件化
+
+假定业务给`createElement()`传入一个组件，如下：
+```javascript
+let app = new Vue({
+  render: h => h(App)
+}).$mount('#app')
+```
+
+对于一个组件来说
+* data->vnode的过程：`createElement()`经过简单的判断马上会将控制权转交给`createComponent()`
+* vnode->node的过程：`createElm()`经过简单的判断马上会将控制权转交`createComponent()`
+
+注意这两个`createComponent()`同名但不是同一个函数，分别位于：
+* core/vdom/create-component.js
+* core/vdom/patch.js
+
+子组件会“继承”父组件，这就需要用到`extend()`方法
+
+每个组件都有cid标识，之前的实验中我们没接触组件，也不需要用到cid，这次实验开始我们需要用到cid。
