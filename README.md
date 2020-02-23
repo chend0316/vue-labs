@@ -5,6 +5,15 @@ data->vnode的过程是由core/vdom/create-element.js中的`createElement()`实�
 
 vnode->node的过程是由core/vdom/patch.js中的`patch()`实现的。
 
+## Lab 路线图
+```
+(主线) Lab1 --> Lab2 --> Lab5
+(支线, 难) Lab2 --> Lab3
+(支线, 难) Lab2 --> Lab4
+```
+
+# 实验内容
+
 ## Lab1
 
 * 通过VDOM接口在页面上显示Hello
@@ -40,7 +49,7 @@ Lab2的入口有2个：
 
 Lab2移除了Scheduler，即core/observer/scheduler.js文件，这部分代码以后专门分析。
 
-## Lab3（patchVnode）
+## Lab3 patchVnode
 
 patch的目的是当dom树改变的时候，避免替换整个节点树，只替换有变动的节点，以提升效率。
 
@@ -66,3 +75,14 @@ let app = new Vue({
 子组件会“继承”父组件，这就需要用到`extend()`方法
 
 每个组件都有cid标识，之前的实验中我们没接触组件，也不需要用到cid，这次实验开始我们需要用到cid。
+
+## Lab5
+
+由于 Lab4 的代码比较多，内容也比较难，可能有同学进度落下了。所以 Lab5 做容易一点的事情，给大家一些的缓冲时间，希望落下进度的同学尽快赶上。
+
+Lab5 要做的是数据相关的周边功能，即实现官方 API 文档中「选项/数据」的部分接口，包括：
+* computed
+* methods
+* watch，这实际上是`vm.$watch()`的语法糖
+
+这些接口的实现都位于core/instance/state.js
