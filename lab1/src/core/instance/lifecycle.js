@@ -3,16 +3,11 @@
 export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
-    // Vue.prototype.__patch__ is injected in entry points
-    // based on the rendering backend used.
+    // 通过 vm._vnode 可以区分是不是第一次 patch
     if (!vm._vnode) {
-      // initial render
-      // vm.$el是DOM对象
       vm._vnode = vnode
-      vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
+      vm.__patch__(vm.$el, vnode)
     } else {
-      // updates
-      // vm._vnode是VNode对象
       vm.__patch__(vm._vnode, vnode)
     }
   }

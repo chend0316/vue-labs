@@ -11,7 +11,6 @@
  */
 
 import VNode, { cloneVNode } from './vnode'
-import { isTextInputType } from 'web/util/element'
 
 import {
   warn,
@@ -49,7 +48,6 @@ export function createPatchFunction (backend) {
    */
   function createElm (
     vnode,
-    insertedVnodeQueue,  // 这个参数没用
     parentElm,
     refElm  // 用于insertBefore
   ) {
@@ -61,7 +59,7 @@ export function createPatchFunction (backend) {
     if (isDef(tag)) {
       vnode.elm = nodeOps.createElement(tag, vnode)
       for (let i = 0; i < children.length; i++) {
-        createElm(children[i], insertedVnodeQueue, vnode.elm, null)
+        createElm(children[i], vnode.elm, null)
       }
       insert(parentElm, vnode.elm, refElm)
     } else if (isTrue(vnode.isComment)) {
@@ -95,7 +93,6 @@ export function createPatchFunction (backend) {
   }
 
   return function patch (oldVnode, vnode) {
-    const insertedVnodeQueue = []
 
     // DOM接口有nodeType，VNode接口没有nodeType，通过nodeType可以判断是真实DOM元素还是虚拟DOM元素
     // oldVnode有可能是真实dom元素也可能是虚拟vdom元素，vnode一定是vdom元素
@@ -105,11 +102,11 @@ export function createPatchFunction (backend) {
       oldVnode = emptyNodeAt(oldVnode)
     }
 
-    // 创建新的dom元素，删除旧的，这样会重新创建一棵节点数
-    // 为了提升效率，可以使用patchVnode，但是很复杂，以后再介绍
+    // 创建新的 dom 元素，删除旧的，但这样相当于重新创建一整棵 dom 树，效率比较低
+    // 为了提升效率，Lab3 会介绍patchVnode
     const oldElm = oldVnode.elm
     const parentElm = nodeOps.parentNode(oldElm)
-    createElm(vnode, insertedVnodeQueue, parentElm, nodeOps.nextSibling(oldElm))
+    createElm(vnode, parentElm, nodeOps.nextSibling(oldElm))
     removeVnodes([oldVnode], 0, 0)
 
     return vnode.elm
