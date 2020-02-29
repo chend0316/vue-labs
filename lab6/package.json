@@ -1,7 +1,7 @@
 {
   "name": "vue",
   "scripts": {
-    "dev": "rollup -w -c scripts/config.js --environment TARGET:web-runtime-dev",
+    "dev": "rollup -w -c scripts/config.js --environment TARGET:web-full-dev",
     "build": "node scripts/build.js"
   },
   "devDependencies": {

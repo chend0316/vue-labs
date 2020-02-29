@@ -4,6 +4,7 @@ const replace = require('rollup-plugin-replace')
 const flow = require('rollup-plugin-flow-no-whitespace')
 const alias = require('rollup-plugin-alias')
 const version = process.env.VERSION || require('../package.json').version
+const featureFlags = require('./feature-flags')
 
 const banner =
   '/*!\n' +
@@ -29,6 +30,14 @@ const builds = {
     dest: resolve('dist/vue.runtime.js'),
     format: 'umd',
     env: 'development',
+    banner
+  },
+  'web-full-dev': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.full.js'),
+    format: 'umd',
+    env: 'development',
+    alias: { he: './entity-decoder' },
     banner
   }
 }
@@ -63,6 +72,10 @@ function genConfig (name) {
   if (opts.env) {
     vars['process.env.NODE_ENV'] = JSON.stringify(opts.env)
   }
+  // feature flags
+  Object.keys(featureFlags).forEach(key => {
+    vars[`process.env.${key}`] = featureFlags[key]
+  })
   config.plugins.push(replace(vars))
 
   if (opts.transpile !== false) {

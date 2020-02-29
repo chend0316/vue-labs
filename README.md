@@ -9,7 +9,8 @@ vnode->node的过程是由core/vdom/patch.js中的`patch()`实现的。
 ```
 (主线) Lab1 --> Lab2 --> Lab5
 (支线, 难) Lab2 --> Lab3
-(支线, 难) Lab2 --> Lab4
+(支线, 难) Lab2 --> Lab4 --> 配置合并、组件注册、异步组件
+(主线, 编译) Lab5 --> Lab6
 ```
 
 # 实验内容
@@ -86,3 +87,11 @@ Lab5 要做的是数据相关的周边功能，即实现官方 API 文档中「�
 * watch，这实际上是`vm.$watch()`的语法糖
 
 这些接口的实现都位于core/instance/state.js
+
+## Lab6 编译
+
+在platforms/web/runtime/index.js中已经定义了`Vue.prototype.$mount`，而在platforms/web/entry-runtime-with-compiler.js中会覆盖`Vue.prototype.$mount`的定义。
+
+如果业务没有定义render选项，那么编译器就会发挥作用。编译器会将template编译成render函数。
+
+编译有3个核心步骤：parse、optimize、generate，入口文件为compiler/index.js。

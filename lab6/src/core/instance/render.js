@@ -1,12 +1,16 @@
 /* @flow */
 import { createElement } from '../vdom/create-element'
 import VNode, { createEmptyVNode } from '../vdom/vnode'
+import { renderHelpersMixin } from './render-helpers/index.js'
 
 export function initRender (vm: Component) {
-  vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
+  vm._c = (a, b, c, d) => createElement(vm, a, b, c, d)
+  vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d)
 }
 
 export function renderMixin (Vue: Class<Component>) {
+  renderHelpersMixin(Vue)
+
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
     const { render } = vm.$options
