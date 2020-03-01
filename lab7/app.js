@@ -18,7 +18,7 @@ const ChildComponent = {
 
 let app = new Vue({
   render (h) {
-    return h('ChildComponent')
+    return h('child-component')
   },
   components: { ChildComponent }
 }).$mount('#app')

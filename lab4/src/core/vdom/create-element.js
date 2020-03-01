@@ -3,6 +3,7 @@
 import config from '../config'
 import VNode, { createEmptyVNode } from './vnode'
 import { createComponent } from './create-component'
+import { resolveAsset } from '../util/index'
 
 import {
   isPrimitive
@@ -41,12 +42,16 @@ export function _createElement (
 
   let vnode
   if (typeof tag === 'string') {
+    let Ctor
     if (config.isReservedTag(tag)) {
       // HTML保留tag
       vnode = new VNode(
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
+    } else if (Ctor = resolveAsset(context.$options, 'components', tag)) {
+      // Lab4: 组件化
+      vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       vnode = new VNode(
         tag, data, children,
